@@ -1,27 +1,31 @@
-name: 同步上游仓库
+name: 喜马拉雅极速版
+
 on:
   schedule:
-    - cron: '0 8 */7 * *'
+    - cron: '*/30 * * * * '
   watch:
-    types: started
-  repository_dispatch:
-    types: sync-repo
+    types: [started]
 jobs:
-  repo-sync:
-    env:
-      PAT: ${{ secrets.PAT }} #此处PAT需要申请，教程详见：https://www.jianshu.com/p/bb82b3ad1d11
+  build:
     runs-on: ubuntu-latest
-    if: github.event.repository.owner.id == github.event.sender.id
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+        
+      - name: 'Set up Python'
+        uses: actions/setup-python@v1
         with:
-          persist-credentials: false
-
-      - name: sync xmly_speed
-        uses: repo-sync/github-sync@v2
-        if: env.PAT
-        with:
-          source_repo: "https://github.com/Zero-S1/xmly_speed.git"
-          source_branch: "master"
-          destination_branch: "main"
-          github_token: ${{ secrets.PAT }}
+          python-version: 3.7
+         
+      - name: 'Install requirements'
+        run: pip install -r ./requirements.txt 
+        
+      - name: 'run 喜马拉雅极速版' 
+        run: python3 xmly_speed.py 
+        env:
+            XMLY_SPEED_COOKIE: ${{ secrets.XMLY_SPEED_COOKIE }}  #必须
+            # XMLY_ACCUMULATE_TIME: ${{ secrets.XMLY_ACCUMULATE_TIME }} #非私密信息，去掉
+            BARK: ${{ secrets.BARK }}     # bark服务
+            SCKEY: ${{ secrets.SCKEY }}   # server酱服务
+            TG_BOT_TOKEN: ${{secrets.TG_BOT_TOKEN}} # tg通知token
+            TG_USER_ID:  ${{secrets.TG_USER_ID}}    # tg通知id
